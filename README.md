@@ -1,2 +1,2 @@
-# AmateurRadioStationOperationTechnicalCompetencyVerificationQuestionBank
-业余无线电台操作技术能力验证题库
+# 业余无线电台操作技术能力验证题库(2025)
+
