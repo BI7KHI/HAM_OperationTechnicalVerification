@@ -1,0 +1,2 @@
+pdfminer.six>=20221105
+chardet>=5.0.0
