@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>业余无线电题库模拟训练系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-item label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        select, input, button {
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .question-container {
+            padding: 30px;
+            display: none;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .question-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .question-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .single-choice {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .multiple-choice {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .question-text {
+            font-size: 1.3em;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: #2c3e50;
+        }
+
+        .options {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .option {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .option:hover {
+            border-color: #4facfe;
+            background: #f8f9ff;
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option.correct {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .option.incorrect {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .option-label {
+            font-weight: bold;
+            margin-right: 10px;
+            min-width: 30px;
+            color: #667eea;
+        }
+
+        .option-text {
+            flex: 1;
+            line-height: 1.5;
+        }
+
+        .question-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navigation {
+            display: flex;
+            gap: 10px;
+        }
+
+        .result {
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result.correct {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.incorrect {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            transition: width 0.3s ease;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+
+        @media (max-width: 768px) {
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .question-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .question-actions {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .navigation {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 业余无线电题库模拟训练</h1>
+            <p>专业的业余无线电操作技术能力验证题库练习系统</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="category">选择题库:</label>
+                    <select id="category">
+                        <option value="">请选择题库...</option>
+                    </select>
+                </div>
+                
+
+                
+                <div class="control-item">
+                    <label for="questionCount">题目数量:</label>
+                    <input type="number" id="questionCount" min="1" max="100" value="20">
+                </div>
+                
+                <div class="control-item">
+                    <label>&nbsp;</label>
+                    <button class="btn" id="startBtn">开始练习</button>
+                </div>
+            </div>
+            
+            <div class="stats" id="stats" style="display: none;">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalQuestions">0</div>
+                    <div class="stat-label">总题数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="currentQuestion">0</div>
+                    <div class="stat-label">当前题目</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="correctCount">0</div>
+                    <div class="stat-label">答对题数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="accuracy">0%</div>
+                    <div class="stat-label">正确率</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="question-container" id="questionContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div class="question-header">
+                <div class="question-info">
+                    <span class="question-badge" id="questionTypeBadge">单选题</span>
+                    <span id="questionCode">题目编号</span>
+                    <span id="questionChapter">章节</span>
+                </div>
+                <div id="questionNumber">1/20</div>
+            </div>
+            
+            <div class="question-text" id="questionText"></div>
+            
+            <div class="options" id="optionsContainer"></div>
+            
+            <div class="result" id="resultContainer"></div>
+            
+            <div class="question-actions">
+                <div class="navigation">
+                    <button class="btn" id="prevBtn" disabled>上一题</button>
+                    <button class="btn" id="nextBtn" disabled>下一题</button>
+                </div>
+                <button class="btn" id="submitBtn" disabled>提交答案</button>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading" style="display: none;">
+            <p>正在加载题目数据...</p>
+        </div>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+</html>

@@ -1,2 +1,4 @@
 pdfminer.six>=20221105
 chardet>=5.0.0
+flask>=2.0.0
+flask-cors>=3.0.0
