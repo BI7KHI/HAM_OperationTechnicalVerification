@@ -4,7 +4,8 @@ class QuizApp {
         this.currentQuestionIndex = 0;
         this.userAnswers = [];
         this.correctCount = 0;
-        this.apiBase = 'http://localhost:5000/api';
+        // 动态获取API基础URL，支持外网访问
+        this.apiBase = `${window.location.protocol}//${window.location.host}/api`;
         
         this.initializeElements();
         this.bindEvents();
