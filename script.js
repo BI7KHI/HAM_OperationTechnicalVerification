@@ -9,12 +9,15 @@ class QuizApp {
         this.initializeElements();
         this.bindEvents();
         this.loadCategories();
+        this.onPracticeModeChange();
     }
 
     initializeElements() {
         // 控制元素
         this.categorySelect = document.getElementById('category');
+        this.practiceModeSelect = document.getElementById('practiceMode');
         this.questionCountInput = document.getElementById('questionCount');
+        this.questionCountContainer = document.getElementById('questionCountContainer');
         this.startBtn = document.getElementById('startBtn');
         
         // 统计元素
@@ -46,6 +49,7 @@ class QuizApp {
 
     bindEvents() {
         this.startBtn.addEventListener('click', () => this.startQuiz());
+        this.practiceModeSelect.addEventListener('change', () => this.onPracticeModeChange());
         this.prevBtn.addEventListener('click', () => this.previousQuestion());
         this.nextBtn.addEventListener('click', () => this.nextQuestion());
         this.submitBtn.addEventListener('click', () => this.submitAnswer());
@@ -69,8 +73,18 @@ class QuizApp {
         }
     }
 
+    onPracticeModeChange() {
+        const mode = this.practiceModeSelect.value;
+        if (mode === 'sequential') {
+            this.questionCountContainer.classList.add('hidden');
+        } else {
+            this.questionCountContainer.classList.remove('hidden');
+        }
+    }
+    
     async startQuiz() {
         const category = this.categorySelect.value;
+        const mode = this.practiceModeSelect.value;
         const count = parseInt(this.questionCountInput.value);
         
         if (!category) {
@@ -78,7 +92,7 @@ class QuizApp {
             return;
         }
         
-        if (count < 1 || count > 100) {
+        if (mode === 'random' && (count < 1 || count > 100)) {
             alert('题目数量必须在1-100之间');
             return;
         }
@@ -86,8 +100,13 @@ class QuizApp {
         this.showLoading(true);
         
         try {
-            let url = `${this.apiBase}/random_questions?category=${encodeURIComponent(category)}&count=${count}`;
-            // 不再过滤题型，包含所有单选题和多选题
+            let url;
+            if (mode === 'sequential') {
+                url = `${this.apiBase}/sequential_questions?category=${encodeURIComponent(category)}`;
+            } else {
+                url = `${this.apiBase}/random_questions?category=${encodeURIComponent(category)}&count=${count}`;
+            }
+            // 包含所有单选题和多选题
             
             const response = await fetch(url);
             const data = await response.json();

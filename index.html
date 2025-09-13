@@ -69,6 +69,10 @@
             color: #495057;
         }
 
+        .control-item.hidden {
+            display: none;
+        }
+
         select, input, button {
             padding: 10px 15px;
             border: 2px solid #dee2e6;
@@ -311,9 +315,15 @@
                     </select>
                 </div>
                 
-
-                
                 <div class="control-item">
+                    <label for="practiceMode">练习模式:</label>
+                    <select id="practiceMode">
+                        <option value="random">随机练习</option>
+                        <option value="sequential">全量顺序练习</option>
+                    </select>
+                </div>
+                
+                <div class="control-item" id="questionCountContainer">
                     <label for="questionCount">题目数量:</label>
                     <input type="number" id="questionCount" min="1" max="100" value="20">
                 </div>

@@ -177,6 +177,21 @@ def get_random_questions():
         'questions': questions
     })
 
+@app.route('/api/sequential_questions')
+def get_sequential_questions():
+    """获取全量顺序题目"""
+    category = request.args.get('category')
+    
+    if not category or category not in questions_data:
+        return jsonify({'error': '无效的题库分类'}), 400
+    
+    questions = questions_data[category]
+    
+    return jsonify({
+        'questions': questions,
+        'total': len(questions)
+    })
+
 if __name__ == '__main__':
     print("正在加载题目数据...")
     load_csv_data()
