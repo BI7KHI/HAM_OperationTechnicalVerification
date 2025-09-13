@@ -292,6 +292,24 @@
             padding-bottom: 10px;
         }
 
+        .nav-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #ffffff;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+
+        .nav-pagination span {
+            font-size: 0.9em;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
         .nav-header h4 {
             margin: 0;
             color: #495057;
@@ -461,6 +479,11 @@
                 <div class="nav-header">
                     <h4>题目导航</h4>
                     <button class="btn-small" id="toggleNavBtn">收起</button>
+                </div>
+                <div class="nav-pagination">
+                    <button class="btn-small" id="prevPageBtn" disabled>上一页</button>
+                    <span id="pageInfo">第 1 页，共 1 页</span>
+                    <button class="btn-small" id="nextPageBtn" disabled>下一页</button>
                 </div>
                 <div class="nav-grid" id="navGrid"></div>
             </div>

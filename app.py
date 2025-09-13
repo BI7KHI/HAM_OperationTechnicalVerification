@@ -144,11 +144,14 @@ def check_answer():
     correct_answer = question['correct_answer']
     is_correct = user_answer == correct_answer
     
+    # 对多选答案进行排序显示
+    sorted_correct_answer = ''.join(sorted(correct_answer)) if len(correct_answer) > 1 else correct_answer
+    
     return jsonify({
         'correct': is_correct,
         'correct_answer': correct_answer,
         'user_answer': user_answer,
-        'explanation': f"正确答案是: {correct_answer}"
+        'explanation': f"正确答案是: {sorted_correct_answer}"
     })
 
 @app.route('/api/random_questions')

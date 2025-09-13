@@ -47,6 +47,14 @@ class QuizApp {
         this.navGrid = document.getElementById('navGrid');
         this.showNavBtn = document.getElementById('showNavBtn');
         this.toggleNavBtn = document.getElementById('toggleNavBtn');
+        this.prevPageBtn = document.getElementById('prevPageBtn');
+        this.nextPageBtn = document.getElementById('nextPageBtn');
+        this.pageInfo = document.getElementById('pageInfo');
+        
+        // 分页相关属性
+        this.itemsPerPage = 50; // 每页显示50个题目
+        this.currentPage = 1;
+        this.totalPages = 1;
         
         // 操作按钮
         this.prevBtn = document.getElementById('prevBtn');
@@ -65,6 +73,8 @@ class QuizApp {
         this.submitBtn.addEventListener('click', () => this.submitAnswer());
         this.showNavBtn.addEventListener('click', () => this.toggleQuestionNavigation());
         this.toggleNavBtn.addEventListener('click', () => this.toggleQuestionNavigation());
+        this.prevPageBtn.addEventListener('click', () => this.goToPreviousPage());
+        this.nextPageBtn.addEventListener('click', () => this.goToNextPage());
     }
 
     async loadCategories() {
@@ -352,11 +362,38 @@ class QuizApp {
         const icon = result.correct ? '✅' : '❌';
         const status = result.correct ? '回答正确！' : '回答错误！';
         
+        // 获取用户实际选择的答案（显示字母）
+        let displayUserAnswer = this.userAnswers[this.currentQuestionIndex] || '未选择';
+        let displayCorrectAnswer = result.correct_answer;
+        
+        if (this.shuffleOptions && this.optionMappings && this.optionMappings[this.currentQuestionIndex]) {
+            const mapping = this.optionMappings[this.currentQuestionIndex];
+            
+            // 转换正确答案为显示字母
+            displayCorrectAnswer = result.correct_answer.split('').map(originalKey => {
+                for (const [displayKey, info] of Object.entries(mapping)) {
+                    if (info.originalKey === originalKey) {
+                        return displayKey;
+                    }
+                }
+                return originalKey;
+            }).sort().join('');
+        } else {
+            // 非混乱模式下对多选答案排序
+            if (result.correct_answer.length > 1) {
+                displayCorrectAnswer = result.correct_answer.split('').sort().join('');
+            }
+        }
+        
+        // 对用户答案排序（如果是多选）
+        if (displayUserAnswer !== '未选择' && displayUserAnswer.length > 1) {
+            displayUserAnswer = displayUserAnswer.split('').sort().join('');
+        }
+        
         this.resultContainer.innerHTML = `
             <h3>${icon} ${status}</h3>
-            <p><strong>您的答案:</strong> ${result.user_answer || '未选择'}</p>
-            <p><strong>正确答案:</strong> ${result.correct_answer}</p>
-            <p>${result.explanation}</p>
+            <p><strong>您的答案:</strong> ${displayUserAnswer}</p>
+            <p><strong>正确答案:</strong> ${displayCorrectAnswer}</p>
         `;
     }
 
@@ -439,18 +476,12 @@ class QuizApp {
     
     // 初始化题目导航
     initializeQuestionNavigation() {
-        this.navGrid.innerHTML = '';
+        // 计算总页数
+        this.totalPages = Math.ceil(this.questions.length / this.itemsPerPage);
+        this.currentPage = Math.ceil((this.currentQuestionIndex + 1) / this.itemsPerPage);
         
-        for (let i = 0; i < this.questions.length; i++) {
-            const navItem = document.createElement('div');
-            navItem.className = 'nav-item';
-            navItem.textContent = i + 1;
-            navItem.dataset.index = i;
-            
-            navItem.addEventListener('click', () => this.jumpToQuestion(i));
-            this.navGrid.appendChild(navItem);
-        }
-        
+        this.renderCurrentPage();
+        this.updatePaginationControls();
         this.updateQuestionNavigation();
     }
     
@@ -482,13 +513,69 @@ class QuizApp {
         });
     }
     
+    // 渲染当前页的题目导航
+    renderCurrentPage() {
+        this.navGrid.innerHTML = '';
+        
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = Math.min(startIndex + this.itemsPerPage, this.questions.length);
+        
+        for (let i = startIndex; i < endIndex; i++) {
+            const navItem = document.createElement('div');
+            navItem.className = 'nav-item';
+            navItem.textContent = i + 1;
+            navItem.dataset.index = i;
+            
+            navItem.addEventListener('click', () => this.jumpToQuestion(i));
+            this.navGrid.appendChild(navItem);
+        }
+    }
+    
+    // 更新分页控件状态
+    updatePaginationControls() {
+        this.pageInfo.textContent = `第 ${this.currentPage} 页，共 ${this.totalPages} 页`;
+        this.prevPageBtn.disabled = this.currentPage <= 1;
+        this.nextPageBtn.disabled = this.currentPage >= this.totalPages;
+    }
+    
+    // 上一页
+    goToPreviousPage() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.renderCurrentPage();
+            this.updatePaginationControls();
+            this.updateQuestionNavigation();
+        }
+    }
+    
+    // 下一页
+    goToNextPage() {
+        if (this.currentPage < this.totalPages) {
+            this.currentPage++;
+            this.renderCurrentPage();
+            this.updatePaginationControls();
+            this.updateQuestionNavigation();
+        }
+    }
+    
     // 跳转到指定题目
     jumpToQuestion(index) {
         if (index >= 0 && index < this.questions.length) {
             this.currentQuestionIndex = index;
+            
+            // 如果跳转的题目不在当前页，需要切换到对应页面
+            const targetPage = Math.ceil((index + 1) / this.itemsPerPage);
+            if (targetPage !== this.currentPage) {
+                this.currentPage = targetPage;
+                this.renderCurrentPage();
+                this.updatePaginationControls();
+            }
+            
             this.displayQuestion();
+            this.updateQuestionNavigation();
         }
     }
+
 }
 
 // 初始化应用
