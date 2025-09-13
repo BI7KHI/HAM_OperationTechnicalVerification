@@ -275,6 +275,87 @@
             color: #6c757d;
         }
 
+        .question-navigation {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+
+        .nav-header h4 {
+            margin: 0;
+            color: #495057;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-small:hover {
+            background: #5a6268;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 8px;
+        }
+
+        .nav-item {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .nav-item:hover {
+            border-color: #4facfe;
+            background: #f8f9ff;
+        }
+
+        .nav-item.current {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .nav-item.answered {
+            border-color: #28a745;
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .nav-item.incorrect {
+            border-color: #dc3545;
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         @media (max-width: 768px) {
             .control-group {
                 flex-direction: column;
@@ -329,6 +410,14 @@
                 </div>
                 
                 <div class="control-item">
+                    <label for="shuffleOptions">选项混乱:</label>
+                    <select id="shuffleOptions">
+                        <option value="true">开启</option>
+                        <option value="false">关闭</option>
+                    </select>
+                </div>
+                
+                <div class="control-item">
                     <label>&nbsp;</label>
                     <button class="btn" id="startBtn">开始练习</button>
                 </div>
@@ -368,6 +457,14 @@
                 <div id="questionNumber">1/20</div>
             </div>
             
+            <div class="question-navigation" id="questionNavigation" style="display: none;">
+                <div class="nav-header">
+                    <h4>题目导航</h4>
+                    <button class="btn-small" id="toggleNavBtn">收起</button>
+                </div>
+                <div class="nav-grid" id="navGrid"></div>
+            </div>
+            
             <div class="question-text" id="questionText"></div>
             
             <div class="options" id="optionsContainer"></div>
@@ -378,6 +475,7 @@
                 <div class="navigation">
                     <button class="btn" id="prevBtn" disabled>上一题</button>
                     <button class="btn" id="nextBtn" disabled>下一题</button>
+                    <button class="btn" id="showNavBtn">题目导航</button>
                 </div>
                 <button class="btn" id="submitBtn" disabled>提交答案</button>
             </div>

@@ -4,6 +4,8 @@ class QuizApp {
         this.currentQuestionIndex = 0;
         this.userAnswers = [];
         this.correctCount = 0;
+        this.shuffleOptions = true;
+        this.originalOptions = [];
         // 动态获取API基础URL，支持外网访问
         this.apiBase = `${window.location.protocol}//${window.location.host}/api`;
         
@@ -19,6 +21,7 @@ class QuizApp {
         this.practiceModeSelect = document.getElementById('practiceMode');
         this.questionCountInput = document.getElementById('questionCount');
         this.questionCountContainer = document.getElementById('questionCountContainer');
+        this.shuffleOptionsSelect = document.getElementById('shuffleOptions');
         this.startBtn = document.getElementById('startBtn');
         
         // 统计元素
@@ -39,6 +42,12 @@ class QuizApp {
         this.optionsContainer = document.getElementById('optionsContainer');
         this.resultContainer = document.getElementById('resultContainer');
         
+        // 导航元素
+        this.questionNavigation = document.getElementById('questionNavigation');
+        this.navGrid = document.getElementById('navGrid');
+        this.showNavBtn = document.getElementById('showNavBtn');
+        this.toggleNavBtn = document.getElementById('toggleNavBtn');
+        
         // 操作按钮
         this.prevBtn = document.getElementById('prevBtn');
         this.nextBtn = document.getElementById('nextBtn');
@@ -54,6 +63,8 @@ class QuizApp {
         this.prevBtn.addEventListener('click', () => this.previousQuestion());
         this.nextBtn.addEventListener('click', () => this.nextQuestion());
         this.submitBtn.addEventListener('click', () => this.submitAnswer());
+        this.showNavBtn.addEventListener('click', () => this.toggleQuestionNavigation());
+        this.toggleNavBtn.addEventListener('click', () => this.toggleQuestionNavigation());
     }
 
     async loadCategories() {
@@ -85,15 +96,16 @@ class QuizApp {
     
     async startQuiz() {
         const category = this.categorySelect.value;
-        const mode = this.practiceModeSelect.value;
-        const count = parseInt(this.questionCountInput.value);
+        const practiceMode = this.practiceModeSelect.value;
+        const questionCount = parseInt(this.questionCountInput.value);
+        this.shuffleOptions = this.shuffleOptionsSelect.value === 'true';
         
         if (!category) {
             alert('请选择题库');
             return;
         }
         
-        if (mode === 'random' && (count < 1 || count > 100)) {
+        if (practiceMode === 'random' && (questionCount < 1 || questionCount > 100)) {
             alert('题目数量必须在1-100之间');
             return;
         }
@@ -102,10 +114,10 @@ class QuizApp {
         
         try {
             let url;
-            if (mode === 'sequential') {
+            if (practiceMode === 'sequential') {
                 url = `${this.apiBase}/sequential_questions?category=${encodeURIComponent(category)}`;
             } else {
-                url = `${this.apiBase}/random_questions?category=${encodeURIComponent(category)}&count=${count}`;
+                url = `${this.apiBase}/random_questions?category=${encodeURIComponent(category)}&count=${questionCount}`;
             }
             // 包含所有单选题和多选题
             
@@ -121,7 +133,11 @@ class QuizApp {
             this.userAnswers = new Array(this.questions.length).fill('');
             this.correctCount = 0;
             
+            // 保存原始选项顺序
+            this.originalOptions = this.questions.map(q => ({ ...q.options }));
+            
             this.showQuizInterface();
+            this.initializeQuestionNavigation();
             this.displayQuestion();
             
         } catch (error) {
@@ -173,26 +189,65 @@ class QuizApp {
     displayOptions(question) {
         this.optionsContainer.innerHTML = '';
         
-        ['A', 'B', 'C', 'D'].forEach(optionKey => {
-            if (question.options[optionKey]) {
-                const optionDiv = document.createElement('div');
-                optionDiv.className = 'option';
-                optionDiv.dataset.value = optionKey;
-                
-                // 检查是否已选择
-                const userAnswer = this.userAnswers[this.currentQuestionIndex];
-                if (userAnswer.includes(optionKey)) {
-                    optionDiv.classList.add('selected');
-                }
-                
-                optionDiv.innerHTML = `
-                    <span class="option-label">${optionKey}</span>
-                    <span class="option-text">${question.options[optionKey]}</span>
-                `;
-                
-                optionDiv.addEventListener('click', () => this.selectOption(optionKey));
-                this.optionsContainer.appendChild(optionDiv);
+        // 获取有效选项
+        let optionKeys = ['A', 'B', 'C', 'D'].filter(key => question.options[key]);
+        let optionTexts = optionKeys.map(key => question.options[key]);
+        
+        // 如果开启选项混乱，则打乱选项内容，但保持字母标签固定
+        if (this.shuffleOptions) {
+            optionTexts = this.shuffleArray([...optionTexts]);
+        }
+        
+        // 创建选项映射，用于记录打乱后的对应关系
+        const shuffledMapping = {};
+        if (this.shuffleOptions) {
+            // 创建原始文本到原始字母的映射
+            const originalTextToKey = {};
+            optionKeys.forEach(key => {
+                originalTextToKey[question.options[key]] = key;
+            });
+            
+            // 为每个显示位置记录对应的原始字母
+            optionKeys.forEach((displayKey, index) => {
+                const displayText = optionTexts[index];
+                const originalKey = originalTextToKey[displayText];
+                shuffledMapping[displayKey] = {
+                    originalKey: originalKey,
+                    text: displayText
+                };
+            });
+        } else {
+            // 如果没有混乱，直接映射
+            optionKeys.forEach((key, index) => {
+                shuffledMapping[key] = {
+                    originalKey: key,
+                    text: optionTexts[index]
+                };
+            });
+        }
+        
+        // 保存当前题目的选项映射
+        if (!this.optionMappings) this.optionMappings = [];
+        this.optionMappings[this.currentQuestionIndex] = shuffledMapping;
+        
+        optionKeys.forEach((displayKey, index) => {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'option';
+            optionDiv.dataset.value = displayKey;
+            
+            // 检查是否已选择（需要根据映射关系判断）
+            const userAnswer = this.userAnswers[this.currentQuestionIndex];
+            if (userAnswer.includes(displayKey)) {
+                optionDiv.classList.add('selected');
             }
+            
+            optionDiv.innerHTML = `
+                <span class="option-label">${displayKey}</span>
+                <span class="option-text">${optionTexts[index]}</span>
+            `;
+            
+            optionDiv.addEventListener('click', () => this.selectOption(displayKey));
+            this.optionsContainer.appendChild(optionDiv);
         });
     }
 
@@ -237,6 +292,21 @@ class QuizApp {
             return;
         }
         
+        // 如果开启了选项混乱，需要将显示的字母转换为原始字母
+        let actualAnswer = userAnswer;
+        if (this.shuffleOptions && this.optionMappings && this.optionMappings[this.currentQuestionIndex]) {
+            const mapping = this.optionMappings[this.currentQuestionIndex];
+            actualAnswer = userAnswer.split('').map(letter => {
+                // 找到显示字母对应的原始字母
+                for (const [displayKey, info] of Object.entries(mapping)) {
+                    if (displayKey === letter) {
+                        return info.originalKey;
+                    }
+                }
+                return letter;
+            }).sort().join('');
+        }
+        
         try {
             const response = await fetch(`${this.apiBase}/check_answer`, {
                 method: 'POST',
@@ -246,11 +316,14 @@ class QuizApp {
                 body: JSON.stringify({
                     category: this.categorySelect.value,
                     question_id: question.id,
-                    answer: userAnswer
+                    answer: actualAnswer
                 })
             });
             
             const result = await response.json();
+            
+            // 确保显示用户实际选择的字母，而不是转换后的答案
+            result.user_answer = userAnswer;
             
             // 显示结果
             this.showResult(result);
@@ -292,13 +365,28 @@ class QuizApp {
         const userAnswers = result.user_answer.split('');
         
         this.optionsContainer.querySelectorAll('.option').forEach(optionDiv => {
-            const optionKey = optionDiv.dataset.value;
+            const displayKey = optionDiv.dataset.value;
             
             optionDiv.classList.remove('correct', 'incorrect');
             
-            if (correctAnswers.includes(optionKey)) {
+            // 如果开启了选项混乱，需要将正确答案转换为显示字母
+            let displayCorrectAnswers = correctAnswers;
+            if (this.shuffleOptions && this.optionMappings && this.optionMappings[this.currentQuestionIndex]) {
+                const mapping = this.optionMappings[this.currentQuestionIndex];
+                displayCorrectAnswers = correctAnswers.map(originalKey => {
+                    // 找到原始字母对应的显示字母
+                    for (const [displayKey, info] of Object.entries(mapping)) {
+                        if (info.originalKey === originalKey) {
+                            return displayKey;
+                        }
+                    }
+                    return originalKey;
+                });
+            }
+            
+            if (displayCorrectAnswers.includes(displayKey)) {
                 optionDiv.classList.add('correct');
-            } else if (userAnswers.includes(optionKey)) {
+            } else if (userAnswers.includes(displayKey)) {
                 optionDiv.classList.add('incorrect');
             }
         });
@@ -334,6 +422,72 @@ class QuizApp {
         const answeredCount = this.userAnswers.filter(answer => answer !== '').length;
         const accuracy = answeredCount > 0 ? Math.round((this.correctCount / answeredCount) * 100) : 0;
         this.accuracySpan.textContent = `${accuracy}%`;
+        
+        // 更新题目导航
+        this.updateQuestionNavigation();
+    }
+    
+    // 数组打乱方法
+    shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+    
+    // 初始化题目导航
+    initializeQuestionNavigation() {
+        this.navGrid.innerHTML = '';
+        
+        for (let i = 0; i < this.questions.length; i++) {
+            const navItem = document.createElement('div');
+            navItem.className = 'nav-item';
+            navItem.textContent = i + 1;
+            navItem.dataset.index = i;
+            
+            navItem.addEventListener('click', () => this.jumpToQuestion(i));
+            this.navGrid.appendChild(navItem);
+        }
+        
+        this.updateQuestionNavigation();
+    }
+    
+    // 切换题目导航显示
+    toggleQuestionNavigation() {
+        const isVisible = this.questionNavigation.style.display !== 'none';
+        this.questionNavigation.style.display = isVisible ? 'none' : 'block';
+        this.showNavBtn.textContent = isVisible ? '题目导航' : '隐藏导航';
+        this.toggleNavBtn.textContent = isVisible ? '展开' : '收起';
+    }
+    
+    // 更新题目导航状态
+    updateQuestionNavigation() {
+        const navItems = this.navGrid.querySelectorAll('.nav-item');
+        
+        navItems.forEach((item, index) => {
+            item.classList.remove('current', 'answered', 'incorrect');
+            
+            if (index === this.currentQuestionIndex) {
+                item.classList.add('current');
+            } else if (this.userAnswers[index] !== '') {
+                const question = this.questions[index];
+                if (question.answered) {
+                    item.classList.add('answered');
+                } else {
+                    item.classList.add('incorrect');
+                }
+            }
+        });
+    }
+    
+    // 跳转到指定题目
+    jumpToQuestion(index) {
+        if (index >= 0 && index < this.questions.length) {
+            this.currentQuestionIndex = index;
+            this.displayQuestion();
+        }
     }
 }
 
