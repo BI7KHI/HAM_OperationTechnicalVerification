@@ -11,3 +11,19 @@ CRAC题库(PDF)链接🔗[资料下载详细-中国无线电协会业余无线�
 | app.py 服务器后端，运行在localhost:5000
 
 | script.js 网页前端
+
+# 本地部署方式 How To Use
+
+1.安装python 3.12.10
+
+2.安装requirements.txt
+
+`pip install requirements.txt`
+
+3.运行app.py
+
+`python app.py`
+
+4.打开浏览器输入localhost:5000或127.0.0.1:5000即可访问
+
+# 服务器部署
