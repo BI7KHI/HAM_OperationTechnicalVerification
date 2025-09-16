@@ -183,6 +183,9 @@ class QuizApp {
         this.questionNumber.textContent = `${this.currentQuestionIndex + 1}/${this.questions.length}`;
         this.questionText.textContent = question.question;
         
+        // 显示配图（如果存在）
+        this.displayQuestionImage(question);
+        
         // 显示选项
         this.displayOptions(question);
         
@@ -194,6 +197,45 @@ class QuizApp {
         
         // 更新统计
         this.updateStats();
+    }
+
+    displayQuestionImage(question) {
+        // 查找或创建图片容器
+        let imageContainer = document.getElementById('question-image-container');
+        if (!imageContainer) {
+            imageContainer = document.createElement('div');
+            imageContainer.id = 'question-image-container';
+            imageContainer.className = 'question-image-container';
+            
+            // 将图片容器插入到题目文本之后，选项之前
+            const questionTextElement = document.querySelector('.question-text');
+            questionTextElement.parentNode.insertBefore(imageContainer, questionTextElement.nextSibling);
+        }
+        
+        // 清空容器
+        imageContainer.innerHTML = '';
+        
+        // 如果题目有配图，显示图片
+        if (question.image) {
+            const img = document.createElement('img');
+            img.src = question.image;
+            img.alt = `题目 ${question.code} 配图`;
+            img.className = 'question-image';
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.style.marginTop = '15px';
+            img.style.marginBottom = '15px';
+            img.style.border = '1px solid #ddd';
+            img.style.borderRadius = '8px';
+            img.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            
+            // 添加加载错误处理
+            img.onerror = function() {
+                imageContainer.innerHTML = '<p style="color: #666; font-style: italic; margin: 15px 0;">配图加载失败</p>';
+            };
+            
+            imageContainer.appendChild(img);
+        }
     }
 
     displayOptions(question) {

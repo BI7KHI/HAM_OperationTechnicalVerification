@@ -38,8 +38,18 @@ def load_csv_data():
                             correct_answer = clean_row['T'].strip()
                             question_type = 'multiple' if len(correct_answer) > 1 else 'single'
                             
+                            # 检查是否有对应的图片文件
+                            question_id = clean_row['J']
+                            image_path = None
+                            image_filename = f"{question_id}.png"
+                            image_full_path = os.path.join('QB_image', image_filename)
+                            
+                            if os.path.exists(image_full_path):
+                                image_path = f"/QB_image/{image_filename}"
+                                print(f"找到图片: {question_id} -> {image_path}")
+                            
                             question = {
-                                'id': clean_row['J'],
+                                'id': question_id,
                                 'chapter': clean_row['P'],
                                 'code': clean_row['I'],
                                 'question': clean_row['Q'],
@@ -50,7 +60,8 @@ def load_csv_data():
                                     'C': clean_row['C'],
                                     'D': clean_row['D']
                                 },
-                                'type': question_type
+                                'type': question_type,
+                                'image': image_path  # 添加图片路径信息
                             }
                             questions_data[category].append(question)
                         except KeyError as e:
@@ -74,6 +85,11 @@ def index():
 def static_files(filename):
     """返回静态文件"""
     return send_from_directory('.', filename)
+
+@app.route('/QB_image/<filename>')
+def serve_image(filename):
+    """提供题目配图文件"""
+    return send_from_directory('QB_image', filename)
 
 @app.route('/api/categories')
 def get_categories():
