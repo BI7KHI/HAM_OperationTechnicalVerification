@@ -16,7 +16,7 @@ CRAC题库(PDF)链接🔗[资料下载详细-中国无线电协会业余无线�
 
 2.安装requirements.txt
 
-`pip install requirements.txt`
+`pip install -r requirements.txt`
 
 3.运行app.py
 
