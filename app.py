@@ -158,16 +158,26 @@ def check_answer():
         return jsonify({'error': '题目不存在'}), 404
     
     correct_answer = question['correct_answer']
-    is_correct = user_answer == correct_answer
+    
+    # 对于多选题，需要对答案进行排序后比较
+    # 因为用户可能以不同顺序选择选项（如BA vs AB）
+    if len(correct_answer) > 1 or len(user_answer) > 1:
+        # 多选题：将答案排序后比较
+        sorted_user_answer = ''.join(sorted(user_answer))
+        sorted_correct_answer = ''.join(sorted(correct_answer))
+        is_correct = sorted_user_answer == sorted_correct_answer
+    else:
+        # 单选题：直接比较
+        is_correct = user_answer == correct_answer
     
     # 对多选答案进行排序显示
-    sorted_correct_answer = ''.join(sorted(correct_answer)) if len(correct_answer) > 1 else correct_answer
+    display_correct_answer = ''.join(sorted(correct_answer)) if len(correct_answer) > 1 else correct_answer
     
     return jsonify({
         'correct': is_correct,
         'correct_answer': correct_answer,
         'user_answer': user_answer,
-        'explanation': f"正确答案是: {sorted_correct_answer}"
+        'explanation': f"正确答案是: {display_correct_answer}"
     })
 
 @app.route('/api/random_questions')
