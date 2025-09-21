@@ -2,6 +2,7 @@ import csv
 import os
 import re
 from typing import Dict, List, Optional
+from collections import defaultdict
 
 from pdfminer.high_level import extract_text
 
@@ -18,7 +19,7 @@ FIELD_RE = re.compile(r"^\s*\[(J|P|I|Q|T)\]\s*(.*)$", re.MULTILINE)
 OPTION_RE = re.compile(r"^\s*\[([ABCD])\]\s*(.*)$", re.MULTILINE)
 # 兼容 A. 文本
 OPTION_ALT_RE = re.compile(r"^\s*([ABCD])[\.|、\)]\s*(.*)$", re.MULTILINE)
-T_FIELD_RE = re.compile(r"^\s*(?:\[T\]|T[:：])\s*([ABCD])\b", re.MULTILINE)
+T_FIELD_RE = re.compile(r"^\s*(?:\[T\]|T[:：])\s*([ABCD]+)\b", re.MULTILINE)  # 修改为支持多选
 
 
 def split_questions_by_J(lines: List[str]) -> List[List[str]]:
@@ -130,6 +131,8 @@ def parse_block(block: List[str]) -> Optional[Dict[str, str]]:
 
 
 def extract_pdf_to_csv(pdf_path: str, csv_path: str) -> int:
+    """提取PDF文件并生成CSV，同时对题号按字母前缀分类重编号"""
+    print(f"开始处理文件: {pdf_path}")
     text = extract_text(pdf_path)
     # 正规化换行，避免多余空白
     lines = [ln.strip("\ufeff").rstrip() for ln in text.splitlines()]
@@ -141,12 +144,37 @@ def extract_pdf_to_csv(pdf_path: str, csv_path: str) -> int:
         if item:
             records.append(item)
 
-    # 新增：对J == "LX"的记录编号处理
-    lx_counter = 1
+    print(f"共解析出 {len(records)} 道题目")
+
+    # 新增：智能重编号系统
+    # 用于存储每个前缀的计数器
+    prefix_counters = defaultdict(int)
+    
+    # 提取题号前缀的正则表达式（匹配字母部分）
+    prefix_pattern = re.compile(r'^([A-Z]+)')
+    
+    # 按顺序重新编号
     for rec in records:
-        if rec.get("J", "") == "LX":
-            rec["J"] = f"LX{lx_counter:04d}"
-            lx_counter += 1
+        original_j = rec.get("J", "")
+        if original_j:
+            # 提取字母前缀
+            match = prefix_pattern.match(original_j)
+            if match:
+                prefix = match.group(1)
+                # 增加该前缀的计数器
+                prefix_counters[prefix] += 1
+                # 重新编号
+                new_j = f"{prefix}{prefix_counters[prefix]:04d}"
+                rec["J"] = new_j
+                print(f"题号重编号: {original_j} -> {new_j}")
+            else:
+                # 如果无法提取前缀，保持原样
+                print(f"无法识别题号前缀，保持原样: {original_j}")
+
+    # 输出重编号统计
+    print("重编号统计:")
+    for prefix, count in sorted(prefix_counters.items()):
+        print(f"  {prefix}: {count} 道题目")
 
     # 写出 CSV
     with open(csv_path, "w", newline="", encoding="utf-8-sig") as f:
