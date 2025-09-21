@@ -141,6 +141,13 @@ def extract_pdf_to_csv(pdf_path: str, csv_path: str) -> int:
         if item:
             records.append(item)
 
+    # 新增：对J == "LX"的记录编号处理
+    lx_counter = 1
+    for rec in records:
+        if rec.get("J", "") == "LX":
+            rec["J"] = f"LX{lx_counter:04d}"
+            lx_counter += 1
+
     # 写出 CSV
     with open(csv_path, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=["J", "P", "I", "Q", "T", "A", "B", "C", "D"])
@@ -162,7 +169,7 @@ if __name__ == "__main__":
     
     for pdf_file in pdf_files:
         PDF_FILE = os.path.join(os.path.dirname(__file__), "QB_PDF", pdf_file)
-        OUT_CSV = os.path.join(os.path.dirname(__file__), "QB_PDF", pdf_file.replace(".pdf", "_extracted.csv"))
+        OUT_CSV = os.path.join(os.path.dirname(__file__), "QB_CSV", pdf_file.replace(".pdf", "_extracted.csv"))
 
         if not os.path.exists(PDF_FILE):
             print(f"跳过不存在的文件: {PDF_FILE}")
