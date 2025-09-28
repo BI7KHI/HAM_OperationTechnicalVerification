@@ -2,8 +2,6 @@ import csv
 import os
 import re
 from typing import Dict, List, Optional
-from collections import defaultdict
-
 from pdfminer.high_level import extract_text
 
 # 解析题目块，返回一个题目的字典
@@ -13,13 +11,12 @@ from pdfminer.high_level import extract_text
 # 2) [Q] 问题常为多行文字，直到出现下一个标签或选项
 # 3) 选项以 A. / A) / [A] / A、 等多种形式出现
 # 4) 正确答案以 [T] A 或 T: A 的形式
-
 QUESTION_START_RE = re.compile(r"^\s*\[J\]\s*(\S+)|^\s*J[:：\s]+(\S+)", re.MULTILINE)
 FIELD_RE = re.compile(r"^\s*\[(J|P|I|Q|T)\]\s*(.*)$", re.MULTILINE)
 OPTION_RE = re.compile(r"^\s*\[([ABCD])\]\s*(.*)$", re.MULTILINE)
 # 兼容 A. 文本
 OPTION_ALT_RE = re.compile(r"^\s*([ABCD])[\.|、\)]\s*(.*)$", re.MULTILINE)
-T_FIELD_RE = re.compile(r"^\s*(?:\[T\]|T[:：])\s*([ABCD]+)\b", re.MULTILINE)  # 修改为支持多选
+T_FIELD_RE = re.compile(r"^\s*(?:\[T\]|T[:：])\s*([ABCD])\b", re.MULTILINE)
 
 
 def split_questions_by_J(lines: List[str]) -> List[List[str]]:
@@ -39,16 +36,21 @@ def split_questions_by_J(lines: List[str]) -> List[List[str]]:
 
 def parse_block(block: List[str]) -> Optional[Dict[str, str]]:
     data: Dict[str, str] = {k: "" for k in ["J", "P", "I", "Q", "T", "A", "B", "C", "D"]}
-
     # 收集多行字段内容（尤其是Q与选项可能换行）
     current_field: Optional[str] = None
 
     def append_to(field: str, text: str):
+        """追加字段内容，附带D选项的图片标记剔除。"""
         if text is None:
             return
         text = text.strip()
         if not text:
             return
+        # 去掉 D 选项中的附图标记（形如 [F]xxxx.png）
+        if field == "D":
+            text = re.sub(r"\[F\]\S+", "", text).strip()
+            if not text:
+                return
         if data[field]:
             data[field] += " " + text
         else:
@@ -58,7 +60,6 @@ def parse_block(block: List[str]) -> Optional[Dict[str, str]]:
         line = raw.strip()
         if not line:
             continue
-
         # [J]/J: 题号优先解析
         m_start = QUESTION_START_RE.search(line)
         if m_start:
@@ -66,7 +67,6 @@ def parse_block(block: List[str]) -> Optional[Dict[str, str]]:
             if qid:
                 data["J"] = qid.strip()
             # 题号所在行可能还包含其它字段，继续往下解析
-
         # 通用字段 [J][P][I][Q][T]
         m_field = FIELD_RE.match(line)
         if m_field:
@@ -87,7 +87,6 @@ def parse_block(block: List[str]) -> Optional[Dict[str, str]]:
                 else:
                     append_to(tag, content)
                 continue
-
         # 选项 [A]-[D]
         m_opt = OPTION_RE.match(line)
         if m_opt:
@@ -95,7 +94,6 @@ def parse_block(block: List[str]) -> Optional[Dict[str, str]]:
             append_to(opt, content)
             current_field = opt
             continue
-
         # 兼容 A. / A) / A、
         m_opt2 = OPTION_ALT_RE.match(line)
         if m_opt2:
@@ -104,7 +102,6 @@ def parse_block(block: List[str]) -> Optional[Dict[str, str]]:
                 append_to(opt, content)
                 current_field = opt
                 continue
-
         # 若当前在累积某字段（多行续写）
         if current_field in ["Q", "A", "B", "C", "D"]:
             append_to(current_field, line)
@@ -122,67 +119,28 @@ def parse_block(block: List[str]) -> Optional[Dict[str, str]]:
             if line.startswith("I:") or line.startswith("I："):
                 append_to("I", line.split(":", 1)[-1].strip().lstrip("："))
                 continue
-
     # 若没有题号或问题，认为失败
     if not data["J"] and not data["Q"]:
         return None
-
     return data
 
 
 def extract_pdf_to_csv(pdf_path: str, csv_path: str) -> int:
-    """提取PDF文件并生成CSV，同时对题号按字母前缀分类重编号"""
-    print(f"开始处理文件: {pdf_path}")
     text = extract_text(pdf_path)
     # 正规化换行，避免多余空白
     lines = [ln.strip("\ufeff").rstrip() for ln in text.splitlines()]
-
     blocks = split_questions_by_J(lines)
     records: List[Dict[str, str]] = []
     for blk in blocks:
         item = parse_block(blk)
         if item:
             records.append(item)
-
-    print(f"共解析出 {len(records)} 道题目")
-
-    # 新增：智能重编号系统
-    # 用于存储每个前缀的计数器
-    prefix_counters = defaultdict(int)
-    
-    # 提取题号前缀的正则表达式（匹配字母部分）
-    prefix_pattern = re.compile(r'^([A-Z]+)')
-    
-    # 按顺序重新编号
-    for rec in records:
-        original_j = rec.get("J", "")
-        if original_j:
-            # 提取字母前缀
-            match = prefix_pattern.match(original_j)
-            if match:
-                prefix = match.group(1)
-                # 增加该前缀的计数器
-                prefix_counters[prefix] += 1
-                # 重新编号
-                new_j = f"{prefix}{prefix_counters[prefix]:04d}"
-                rec["J"] = new_j
-                print(f"题号重编号: {original_j} -> {new_j}")
-            else:
-                # 如果无法提取前缀，保持原样
-                print(f"无法识别题号前缀，保持原样: {original_j}")
-
-    # 输出重编号统计
-    print("重编号统计:")
-    for prefix, count in sorted(prefix_counters.items()):
-        print(f"  {prefix}: {count} 道题目")
-
     # 写出 CSV
     with open(csv_path, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=["J", "P", "I", "Q", "T", "A", "B", "C", "D"])
         writer.writeheader()
         for r in records:
             writer.writerow(r)
-
     return len(records)
 
 
@@ -190,18 +148,16 @@ if __name__ == "__main__":
     # 处理所有PDF文件
     pdf_files = [
         "A类题库.pdf",
-        "B类题库.pdf", 
+        "B类题库.pdf",
         "C类题库.pdf",
         "总题库.pdf"
     ]
-    
+
     for pdf_file in pdf_files:
         PDF_FILE = os.path.join(os.path.dirname(__file__), "QB_PDF", pdf_file)
-        OUT_CSV = os.path.join(os.path.dirname(__file__), "QB_CSV", pdf_file.replace(".pdf", "_extracted.csv"))
-
+        OUT_CSV = os.path.join(os.path.dirname(__file__), "QB_PDF", pdf_file.replace(".pdf", "_extracted.csv"))
         if not os.path.exists(PDF_FILE):
             print(f"跳过不存在的文件: {PDF_FILE}")
             continue
-
         count = extract_pdf_to_csv(PDF_FILE, OUT_CSV)
         print(f"完成，从 {PDF_FILE} 抽取 {count} 条记录，输出: {OUT_CSV}")
