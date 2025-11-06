@@ -143,6 +143,13 @@ class QuizApp {
             this.userAnswers = new Array(this.questions.length).fill('');
             this.correctCount = 0;
             
+            // 为每个题目初始化answered属性
+            this.questions.forEach(question => {
+                if (question.answered === undefined) {
+                    question.answered = false;
+                }
+            });
+            
             // 保存原始选项顺序
             this.originalOptions = this.questions.map(q => ({ ...q.options }));
             
@@ -546,9 +553,15 @@ class QuizApp {
                 item.classList.add('current');
             } else if (this.userAnswers[index] !== '') {
                 const question = this.questions[index];
-                if (question.answered) {
-                    item.classList.add('answered');
+                // 安全检查：确保question存在且answered属性已定义
+                if (question && question.answered !== undefined) {
+                    if (question.answered) {
+                        item.classList.add('answered');
+                    } else {
+                        item.classList.add('incorrect');
+                    }
                 } else {
+                    // 如果answered属性未定义，默认显示为incorrect
                     item.classList.add('incorrect');
                 }
             }
