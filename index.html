@@ -5,19 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>业余无线电新题库训练系统</title>
     <style>
+        /* -------------------- 基础样式与布局 -------------------- */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Microsoft YaHei', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-
         .container {
             max-width: 1000px;
             margin: 0 auto;
@@ -26,30 +25,27 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             overflow: hidden;
         }
-
         .header {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
             padding: 30px;
             text-align: center;
         }
-
         .header h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
         }
-
         .header p {
             font-size: 1.2em;
             opacity: 0.9;
         }
 
+        /* -------------------- 控制区域样式 -------------------- */
         .controls {
             padding: 30px;
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
         }
-
         .control-group {
             display: flex;
             flex-wrap: wrap;
@@ -57,20 +53,17 @@
             align-items: center;
             margin-bottom: 20px;
         }
-
         .control-item {
             display: flex;
             flex-direction: column;
             gap: 5px;
         }
-
+        .control-item.hidden {
+            display: none;
+        }
         .control-item label {
             font-weight: bold;
             color: #495057;
-        }
-
-        .control-item.hidden {
-            display: none;
         }
 
         select, input, button {
@@ -80,13 +73,11 @@
             font-size: 16px;
             transition: all 0.3s ease;
         }
-
         select:focus, input:focus {
             outline: none;
             border-color: #459ae4;
             box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
         }
-
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -96,18 +87,20 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
 
+        /* -------------------- 统计信息区域 -------------------- */
         .stats {
             display: flex;
             justify-content: space-around;
@@ -115,59 +108,51 @@
             padding: 15px;
             border-radius: 8px;
         }
-
         .stat-item {
             text-align: center;
         }
-
         .stat-number {
             font-size: 2em;
             font-weight: bold;
             color: #667eea;
         }
-
         .stat-label {
             color: #6c757d;
             font-size: 0.9em;
         }
 
+        /* -------------------- 题目展示区域样式 -------------------- */
         .question-container {
             padding: 30px;
             display: none;
         }
-
         .question-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: space_between;
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 2px solid #e9ecef;
         }
-
         .question-info {
             display: flex;
             gap: 20px;
             align-items: center;
         }
-
         .question-badge {
             padding: 5px 12px;
             border-radius: 20px;
             font-size: 0.9em;
             font-weight: bold;
         }
-
         .single-choice {
             background: #d4edda;
             color: #155724;
         }
-
         .multiple-choice {
             background: #fff3cd;
             color: #856404;
         }
-
         .question-text {
             font-size: 1.3em;
             line-height: 1.6;
@@ -175,12 +160,12 @@
             color: #2c3e50;
         }
 
+        /* -------------------- 选项与答题反馈样式 -------------------- */
         .options {
             display: grid;
             gap: 15px;
             margin-bottom: 30px;
         }
-
         .option {
             display: flex;
             align-items: flex-start;
@@ -191,46 +176,46 @@
             transition: all 0.3s ease;
             background: white;
         }
-
         .option:hover {
             border-color: #4facfe;
             background: #f8f9ff;
         }
-
         .option.selected {
             border-color: #667eea;
             background: #f0f4ff;
         }
-
         .option.correct {
             border-color: #28a745;
             background: #d4edda;
         }
-
         .option.incorrect {
             border-color: #dc3545;
             background: #f8d7da;
         }
-
         .option-label {
             font-weight: bold;
             margin-right: 10px;
             min-width: 30px;
             color: #667eea;
         }
-
         .option-text {
             flex: 1;
             line-height: 1.5;
         }
 
+        /* -------------------- 底部操作按钮区域 -------------------- */
         .question-actions {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-
         .navigation {
+            display: flex;
+            gap: 10px;
+        }
+        .action-buttons {
             display: flex;
             gap: 10px;
         }
@@ -241,19 +226,18 @@
             margin-top: 20px;
             display: none;
         }
-
         .result.correct {
             background: #d4edda;
             border: 1px solid #c3e6cb;
             color: #155724;
         }
-
         .result.incorrect {
             background: #f8d7da;
             border: 1px solid #f5c6cb;
             color: #721c24;
         }
 
+        /* -------------------- 进度条样式 -------------------- */
         .progress-bar {
             width: 100%;
             height: 8px;
@@ -262,7 +246,6 @@
             overflow: hidden;
             margin-bottom: 20px;
         }
-
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
@@ -275,6 +258,7 @@
             color: #6c757d;
         }
 
+        /* -------------------- 题目导航面板样式 -------------------- */
         .question-navigation {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -282,7 +266,6 @@
             padding: 20px;
             margin-bottom: 20px;
         }
-
         .nav-header {
             display: flex;
             justify-content: space-between;
@@ -291,7 +274,6 @@
             border-bottom: 1px solid #e9ecef;
             padding-bottom: 10px;
         }
-
         .nav-pagination {
             display: flex;
             justify-content: center;
@@ -303,18 +285,15 @@
             border-radius: 6px;
             border: 1px solid #e9ecef;
         }
-
         .nav-pagination span {
             font-size: 0.9em;
             color: #6c757d;
             font-weight: 500;
         }
-
         .nav-header h4 {
             margin: 0;
             color: #495057;
         }
-
         .btn-small {
             padding: 5px 10px;
             font-size: 0.8em;
@@ -325,17 +304,14 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-
         .btn-small:hover {
             background: #5a6268;
         }
-
         .nav-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
             gap: 8px;
         }
-
         .nav-item {
             width: 40px;
             height: 40px;
@@ -350,79 +326,72 @@
             transition: all 0.3s ease;
             background: white;
         }
-
         .nav-item:hover {
             border-color: #4facfe;
             background: #f8f9ff;
         }
-
         .nav-item.current {
             border-color: #667eea;
             background: #667eea;
             color: white;
         }
-
         .nav-item.answered {
             border-color: #28a745;
             background: #d4edda;
             color: #155724;
         }
-
         .nav-item.incorrect {
             border-color: #dc3545;
             background: #f8d7da;
             color: #721c24;
         }
 
+        /* -------------------- 页脚 -------------------- */
         .footer {
             background: #f8f9fa;
             border-top: 1px solid #e9ecef;
             padding: 20px;
             margin-top: 20px;
         }
-
         .footer-content {
             max-width: 1000px;
             margin: 0 auto;
             text-align: center;
             color: #6c757d;
         }
-
         .footer-content p {
             margin: 5px 0;
             font-size: 0.9em;
         }
-
         .footer-content a {
             color: #4facfe;
             text-decoration: none;
             font-weight: 500;
         }
-
         .footer-content a:hover {
             color: #667eea;
             text-decoration: underline;
         }
 
+        /* -------------------- 小屏幕适配 -------------------- */
         @media (max-width: 768px) {
             .control-group {
                 flex-direction: column;
                 align-items: stretch;
             }
-
             .question-header {
                 flex-direction: column;
                 gap: 10px;
                 align-items: flex-start;
             }
-
             .question-actions {
                 flex-direction: column;
-                gap: 15px;
+                align-items: stretch;
             }
-
             .navigation {
-                width: 100%;
+                justify-content: center;
+            }
+            .action-buttons {
                 justify-content: center;
             }
         }
@@ -430,11 +399,13 @@
 </head>
 <body>
     <div class="container">
+        <!-- 顶部标题区域 -->
         <div class="header">
             <h1>🎯 业余无线电题库模拟训练</h1>
             <p>2025年业余无线电操作技术能力验证题库练习系统</p>
         </div>
 
+        <!-- 练习参数配置区 -->
         <div class="controls">
             <div class="control-group">
                 <div class="control-item">
@@ -443,7 +414,6 @@
                         <option value="">请选择题库...</option>
                     </select>
                 </div>
-                
                 <div class="control-item">
                     <label for="practiceMode">练习模式:</label>
                     <select id="practiceMode">
@@ -451,12 +421,10 @@
                         <option value="sequential">全量顺序练习</option>
                     </select>
                 </div>
-                
                 <div class="control-item" id="questionCountContainer">
                     <label for="questionCount">题目数量:</label>
                     <input type="number" id="questionCount" min="1" max="100" value="20">
                 </div>
-                
                 <div class="control-item">
                     <label for="shuffleOptions">选项混乱:</label>
                     <select id="shuffleOptions">
@@ -464,13 +432,13 @@
                         <option value="false">关闭</option>
                     </select>
                 </div>
-                
                 <div class="control-item">
                     <label>&nbsp;</label>
                     <button class="btn" id="startBtn">开始练习</button>
                 </div>
             </div>
-            
+
+            <!-- 答题统计信息，在练习过程中展示 -->
             <div class="stats" id="stats" style="display: none;">
                 <div class="stat-item">
                     <div class="stat-number" id="totalQuestions">0</div>
@@ -491,11 +459,14 @@
             </div>
         </div>
 
+        <!-- 题目展示区域 -->
         <div class="question-container" id="questionContainer">
+            <!-- 顶部进度条 -->
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-            
+
+            <!-- 题目信息头部：题型、编号、章节等 -->
             <div class="question-header">
                 <div class="question-info">
                     <span class="question-badge" id="questionTypeBadge">单选题</span>
@@ -504,7 +475,8 @@
                 </div>
                 <div id="questionNumber">1/20</div>
             </div>
-            
+
+            <!-- 题目导航面板，可随时查看跳转 -->
             <div class="question-navigation" id="questionNavigation" style="display: none;">
                 <div class="nav-header">
                     <h4>题目导航</h4>
@@ -517,28 +489,37 @@
                 </div>
                 <div class="nav-grid" id="navGrid"></div>
             </div>
-            
+
+            <!-- 题干文本 -->
             <div class="question-text" id="questionText"></div>
-            
+
+            <!-- 选项列表 -->
             <div class="options" id="optionsContainer"></div>
-            
+
+            <!-- 答题结果提示 -->
             <div class="result" id="resultContainer"></div>
-            
+
+            <!-- 底部操作按钮：上一题、下一题、收藏、提交等 -->
             <div class="question-actions">
                 <div class="navigation">
                     <button class="btn" id="prevBtn" disabled>上一题</button>
                     <button class="btn" id="nextBtn" disabled>下一题</button>
                     <button class="btn" id="showNavBtn">题目导航</button>
                 </div>
-                <button class="btn" id="submitBtn" disabled>提交答案</button>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="favoriteBtn" disabled>收藏</button>
+                    <button class="btn" id="submitBtn" disabled>提交答案</button>
+                </div>
             </div>
         </div>
-        
+
+        <!-- 加载中提示 -->
         <div class="loading" id="loading" style="display: none;">
             <p>正在加载题目数据...</p>
         </div>
     </div>
-    
+
+    <!-- 页脚信息 -->
     <div class="footer">
         <div class="footer-content">
             <p>项目地址: <a href="https://github.com/BI7KHI/HAM_OperationTechnicalVerification" target="_blank">GitHub</a></p>
